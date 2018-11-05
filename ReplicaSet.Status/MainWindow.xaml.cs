@@ -1,22 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
-using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
+using System.Linq;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace ReplicaSet.Status
 {
@@ -25,29 +16,85 @@ namespace ReplicaSet.Status
     /// </summary>
     public partial class MainWindow : Window
     {
+        private IMongoClient _mongoClient;
+        private ObservableCollection<Counter> _counters;
+
         public MainWindow()
         {
             InitializeComponent();
+            _counters = new ObservableCollection<Counter>();
+        }
 
+        private async void OnClear(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                await _mongoClient.DropDatabaseAsync("testrs");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex);
+                MessageBox.Show("Error dropping database");
+            }
+        }
+
+        private async void OnGetData(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var testDatabase = _mongoClient.GetDatabase("testrs");
+                var collection = testDatabase.GetCollection<Counter>("counter");
+                DataSaved.ItemsSource = await collection.AsQueryable().ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex);
+                MessageBox.Show("Error inserting data");
+            }
+        }
+
+        private void OnInsertData(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var testDatabase = _mongoClient.GetDatabase("testrs");
+                var collection = testDatabase.GetCollection<Counter>("counter");
+                var maxCounter = 0;
+                if (DataSent.ItemsSource != null)
+                {
+                    maxCounter = DataSent.ItemsSource.OfType<Counter>().Max(c => c.Count);
+                }
+                var newCounter = new Counter
+                {
+                    Count = maxCounter + 1,
+                    DateTime = DateTime.Now
+                };
+                collection.InsertOneAsync(newCounter);
+                _counters.Add(newCounter);
+                DataSent.ItemsSource = _counters;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex);
+                MessageBox.Show("Error inserting data");
+            }
         }
 
         private void OnConnect(object sender, RoutedEventArgs e)
         {
             var conn = connectionString.Text;
-            IMongoClient mongoClient = null;
             try
             {
-                mongoClient = new MongoClient(conn);
+                _mongoClient = new MongoClient(conn);
 
             }
             catch (Exception ex)
             {
                 Debug.WriteLine(ex);
-                var messageQueue = ErrorMessage.MessageQueue;
-                Task.Factory.StartNew(() => messageQueue.Enqueue("Error connecting"));
+                MessageBox.Show("Error connecting");
             }
 
-            var adminDatabase = mongoClient.GetDatabase("admin");
+            var adminDatabase = _mongoClient.GetDatabase("admin");
             try
             {
                 var status = adminDatabase.RunCommand<BsonDocument>("{replSetGetStatus: 1}");
@@ -57,28 +104,8 @@ namespace ReplicaSet.Status
             catch (Exception ex)
             {
                 Debug.WriteLine(ex);
-                var messageQueue = ErrorMessage.MessageQueue;
-                Task.Factory.StartNew(() => messageQueue.Enqueue("Error getting replica set status"));
+                MessageBox.Show("Error getting replica set status");
             }
         }
-    }
-
-    [BsonIgnoreExtraElements]
-    public class ReplicaSetStatus
-    {
-        [BsonElement("members")]
-        public IEnumerable<Member> Members { get; set; }
-    }
-
-    [BsonIgnoreExtraElements]
-    public class Member
-    {
-        public int Id { get; set; }
-
-        [BsonElement("name")]
-        public string Name { get; set; }
-
-        [BsonElement("stateStr")]
-        public string StateStr { get; set; }
     }
 }

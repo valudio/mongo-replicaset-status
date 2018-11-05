@@ -18,18 +18,64 @@
         Icon="logo.jpg">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition>            </RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
             <RowDefinition></RowDefinition>
             <RowDefinition></RowDefinition>
         </Grid.RowDefinitions>
         <materialDesign:Card Padding="32" Margin="16">
-            <StackPanel>
-                <TextBlock Style="{DynamicResource MaterialDesignTitleTextBlock}">Connection string</TextBlock>
-                <TextBox Name="connectionString" Text="mongodb://localhost:27017,localhost:27018/?replicaSet=ReplSetLogs"></TextBox>
-                <Button Margin="0, 10" Click="OnConnect">Connect</Button>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Style="{DynamicResource MaterialDesignTitleTextBlock}" Margin="10">Connection string</TextBlock>
+                <TextBox Name="connectionString" Text="mongodb://localhost:27017,localhost:27018/?replicaSet=ReplSetLogs" Margin="10"></TextBox>
+                <Button Margin="10, 0" Click="OnConnect" Width="150px">Connect</Button>
             </StackPanel>
         </materialDesign:Card>
-        <ItemsControl Grid.Row="1"
+        <materialDesign:Card Padding="32" Margin="16" Grid.Row="1">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                    <RowDefinition></RowDefinition>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock HorizontalAlignment="Center" Style="{DynamicResource MaterialDesignTitleTextBlock}">Data sent to the server</TextBlock>
+                    <ListView HorizontalAlignment="Center" Name="DataSent">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Count" Margin="10, 0"></TextBlock>
+                                    <TextBlock Text="{Binding Count}" Margin="10, 0"></TextBlock>
+                                    <TextBlock Text="Date" Margin="10, 0"></TextBlock>
+                                    <TextBlock Text="{Binding DateTime}"></TextBlock>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                    <Button Margin="0, 10" HorizontalAlignment="Center" Click="OnInsertData" Width="150px">Insert data</Button>
+                </StackPanel>
+                <StackPanel Grid.Column="1">
+                    <TextBlock HorizontalAlignment="Center" Style="{DynamicResource MaterialDesignTitleTextBlock}">Data in the server</TextBlock>
+                    <ListView Name="DataSaved" HorizontalAlignment="Center">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Count" Margin="10, 0"></TextBlock>
+                                    <TextBlock Text="{Binding Count}" Margin="10, 0"></TextBlock>
+                                    <TextBlock Text="Date" Margin="10, 0"></TextBlock>
+                                    <TextBlock Text="{Binding DateTime}"></TextBlock>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                    <Button Margin="0, 10" HorizontalAlignment="Center" Click="OnGetData" Width="150px">Get data</Button>
+                </StackPanel>
+                <Button Grid.ColumnSpan="2" Grid.Row="1" Margin="0, 10" HorizontalAlignment="Center" Click="OnClear" Width="200px">Remove test database</Button>
+            </Grid>
+        </materialDesign:Card>
+        <ItemsControl Grid.Row="2"
                       Grid.IsSharedSizeScope="True"
                       Margin="12 0 12 0"
                       HorizontalAlignment="Center"
